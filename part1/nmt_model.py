@@ -252,36 +252,49 @@ class NMT(nn.Module):
                     your implementation.
         """
 
-        
         # 1. Apply decoder to Ybar_t and dec_state
         dec_hidden, dec_cell = self.decoder(Ybar_t, dec_state)
         dec_state = (dec_hidden, dec_cell)
 
         ### Your code here (~8-15 lines) ###
-        raise NotImplementedError("Implement the step function in nmt_model.py")
 
         # Dot-product attention
         # 2. Compute attention scores e_t
         # Need to compute batched matrix multiplication between dec_hidden and enc_hiddens_proj
         # dec_hidden has a shape of (b, h), enc_hiddens_proj is (b, src_len, h)
+        # NOTE: enc_hiddens_proj is attn W @ enc_hiddens
+        e_t = (dec_hidden.unsqueeze(1) @ enc_hiddens_proj.transpose(-1, -2)).squeeze(1)
         # We want to end up with a shape of (b, src_len)
+        b = enc_hiddens_proj.shape[0]
+        src_len = enc_hiddens_proj.shape[1]
+        assert e_t.shape == (b, src_len)
 
         # If enc_masks is None, this step should be skipped
-        # Use bool() to convert ByteTensor to BoolTensor
-        # Use float("-inf") to represent -inf
-        # Use masked_fill_ to fill in -inf at the masked positions
+        if enc_masks != None:
+            # Use bool() to convert ByteTensor to BoolTensor
+            enc_masks_b = enc_masks.bool()
+            # Use float("-inf") to represent -inf
+            # Use masked_fill_ to fill in -inf at the masked positions
+            e_t.masked_fill_(enc_masks_b, float("-inf"))
 
         # 3. Apply softmax to e_t to yield alpha_t of shape (b, src_len)
+        alpha_t = F.softmax(e_t, dim=-1)
 
         # 4. Use batched matrix multiplication between alpha_t and enc_hiddens
         # alpha_t has a shape of (b, src_len), enc_hiddens is (b, src_len, 2h)
         # We want to end up with a shape of (b, 2h)
+        attention_t = (alpha_t.unsqueeze(1) @ enc_hiddens).squeeze(1)
+        two_h = enc_hiddens.shape[-1]
+        assert attention_t.shape == (b, two_h)
 
         # 5. Concatenate dec_hidden with attention_t to compute tensor u_t
+        u_t = torch.cat((dec_hidden, attention_t), dim=-1)
 
         # 6. Apply combined output projection layer to u_t to compute tensor v_t
+        v_t = self.combined_output_projection(u_t)
 
         # 7. Compute tensor O_t by applying Tanh and then dropout to v_t
+        o_t = self.dropout(F.tanh(v_t))
 
         ### End of your code ###
         return dec_state, o_t, alpha_t
