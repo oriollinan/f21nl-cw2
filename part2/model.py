@@ -108,12 +108,12 @@ class CausalSelfAttention(nn.Module):
         self, x: torch.Tensor, output_attentions: bool = False
     ) -> GPTAttentionOutput:
         """Forward the masked self-attention layer.
-        
+
         Args:
             x (torch.Tensor): Input tensor of shape (B, T, C) where B is the batch size,
                 T is the sequence length, C is the embedding dimension.
             output_attentions (bool, optional): Whether to return the attention scores. Defaults to False.
-        
+
         Returns:
             GPTAttentionOutput: A dataclass with the following fields:
                 output: Tensor of shape (B, T, C) where B is the batch size,
@@ -122,24 +122,45 @@ class CausalSelfAttention(nn.Module):
         """
         B, T, C = x.size()
         ### Your code here (~8-15 lines) ###
-        raise NotImplementedError("Implement the forward method in CausalSelfAttention in model.py")
         # Step 1: Calculate query, key, values for all heads
         # (B, nh, T, hs)
-      
+        hs = int(C / self.n_head)
+        q = self.query(x).view(B, T, self.n_head, hs).transpose(1, 2)
+        k = self.key(x).view(B, T, self.n_head, hs).transpose(1, 2)
+        v = self.value(x).view(B, T, self.n_head, hs).transpose(1, 2)
+        assert q.shape == (B, self.n_head, T, hs)
+        assert k.shape == (B, self.n_head, T, hs)
+        assert v.shape == (B, self.n_head, T, hs)
+
         # Step 2: Compute attention scores
         # Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
+        attention = q @ k.transpose(-2, -1)
+        attention /= hs**0.5
+        assert attention.shape == (B, self.n_head, T, T)
 
         # Step 3: Masking out the future tokens (causal) and softmax
+        mask = self.mask[:, :, :T, :T]
+        attention = attention.masked_fill(mask == 0, float("-inf"))
+        attention = F.softmax(attention, dim=-1)
+        attention = self.attn_drop(attention)
 
         # Step 4: Compute the attention output
         # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
+        y = attention @ v
 
         # Step 5: re-assemble all head outputs side by side
         # (B, T, nh, hs) -> (B, T, C)
+        y = y.view(B, T, C)
+        assert y.shape == (B, T, C)
 
         # Step 6: output projection + dropout
+        y = self.proj(y)
+        y = self.resid_drop(y)
+
         ### End of your code ###
-        return GPTAttentionOutput(output=y, attentions=attention)
+        return GPTAttentionOutput(
+            output=y, attentions=attention if output_attentions else None
+        )
 
 
 class Block(nn.Module):
@@ -186,10 +207,8 @@ class GPT(nn.Module):
 
         # Token embedding table
         self.tok_emb = nn.Embedding(config.vocab_size, config.n_embed)
-        # Positional embeddings        
-        self.pos_emb = nn.Parameter(
-            torch.zeros(1, config.block_size, config.n_embed)
-        )
+        # Positional embeddings
+        self.pos_emb = nn.Parameter(torch.zeros(1, config.block_size, config.n_embed))
         # Transformer blocks
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
         # Decoder head
@@ -239,13 +258,13 @@ class GPT(nn.Module):
         """
         attention_scores = []
         b, t = input_ids.size()
-        assert t <= self.block_size, (
-            f"Cannot forward, model block size ({t}, {self.block_size}) is exhausted."
-        )
+        assert (
+            t <= self.block_size
+        ), f"Cannot forward, model block size ({t}, {self.block_size}) is exhausted."
 
         token_embeddings = self.tok_emb(input_ids)
-        
-        # Positional embeddings: each position maps to a (learnable) vector        
+
+        # Positional embeddings: each position maps to a (learnable) vector
         position_embeddings = self.pos_emb[:, :t, :]
         x_input = token_embeddings + position_embeddings
 
@@ -323,7 +342,9 @@ class GPT(nn.Module):
 
             if do_sample:
                 ### Your code here (~5-12 lines) ###
-                raise NotImplementedError("Implement sampling in the generate method in model.py (MSc students only)")
+                raise NotImplementedError(
+                    "Implement sampling in the generate method in model.py (MSc students only)"
+                )
                 # 1. If top_k is not None, crop the logits to only the top k options
 
                 # 2. If top_p is not None, crop the logits to only the top p options
