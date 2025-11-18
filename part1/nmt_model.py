@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.utils
 
+import wandb
 
 class NMT(nn.Module):
     """Simple Neural Machine Translation Model"""
@@ -399,6 +400,14 @@ class NMT(nn.Module):
 
         return model
 
+    @staticmethod
+    def load_wandb(run_path):
+        filename = "models/nmt.model"
+
+        restored = wandb.restore(name=filename, run_path=run_path)
+
+        return NMT.load(filename)
+
     def save(self, path: str) -> None:
         """Save the model to a file.
 
@@ -421,3 +430,5 @@ class NMT(nn.Module):
         }
 
         torch.save(params, path)
+        wandb.save(path)
+

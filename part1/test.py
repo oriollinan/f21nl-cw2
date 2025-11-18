@@ -10,6 +10,7 @@ from nmt_model import NMT
 from utils import read_corpus
 from vocab import Vocab
 
+import wandb
 
 def compute_corpus_level_bleu_score(
     references: list[list[str]], predictions: list[list[str]]
@@ -55,8 +56,8 @@ def evaluate(args: argparse.Namespace):
     print(f"Load vocab from {args.vocab_file}")
     vocab = Vocab.load(args.vocab_file)
 
-    print(f"Load model from {args.checkpoint_path}")
-    model = NMT.load(args.checkpoint_path)
+    print(f"Loading model")
+    model = NMT.load(args.checkpoint_path) if args.checkpoint_path != None else NMT.load_wandb(args.wandb_checkpoint_run)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     model = model.to(device)
     model.eval()
@@ -103,11 +104,18 @@ def evaluate(args: argparse.Namespace):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument(
         "--checkpoint-path",
         type=Path,
-        required=True,
         help="Path to the model checkpoint.",
+    )
+
+    group.add_argument(
+        "--wandb-checkpoint-run",
+        type=str,
+        help="Path to the model checkpoint in wandb.",
     )
 
     parser.add_argument(
