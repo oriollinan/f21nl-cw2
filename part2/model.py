@@ -147,10 +147,13 @@ class CausalSelfAttention(nn.Module):
         # Step 4: Compute the attention output
         # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
         y = attention @ v
+        assert y.shape == (B, self.n_head, T, hs)
 
         # Step 5: re-assemble all head outputs side by side
+        y = y.transpose(1, 2)
         # (B, T, nh, hs) -> (B, T, C)
-        y = y.view(B, T, C)
+        # NOTE: can't use `view` since `y` is not in a contiguos block of memory
+        y = y.reshape(B, T, C)
         assert y.shape == (B, T, C)
 
         # Step 6: output projection + dropout
