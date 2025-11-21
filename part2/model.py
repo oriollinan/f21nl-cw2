@@ -9,6 +9,7 @@ from torch.nn import functional as F
 
 import wandb
 
+
 @dataclass
 class GPTAttentionOutput:
     """Output of the GPT attention layer."""
@@ -347,17 +348,25 @@ class GPT(nn.Module):
 
             if do_sample:
                 ### Your code here (~5-12 lines) ###
-                raise NotImplementedError(
-                    "Implement sampling in the generate method in model.py (MSc students only)"
-                )
                 # 1. If top_k is not None, crop the logits to only the top k options
+                indices = torch.arange(logits.shape[-1])
+                if top_k:
+                    logits, indices = torch.topk(logits, top_k)
 
                 # 2. If top_p is not None, crop the logits to only the top p options
+                if top_p:
+                    cum_probs = torch.cumsum(logits, -1)
+                    logits = logits.masked_fill_(~(cum_probs < top_p), float("-inf"))
 
                 # apply softmax to convert logits to (normalized) probabilities
+                logits = F.softmax(logits, -1)
+
                 # sample from the distribution using the re-normalized probabilities
+                index = torch.multinomial(logits, 1)
+                predicted_id = indices[index]
 
                 # append sampled index to the running sequence and continue
+                input_ids = torch.cat((input_ids, predicted_id), dim=1)
                 ### End of your code ###
             else:
                 # greedily take the argmax
