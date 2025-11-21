@@ -241,14 +241,11 @@ def train(args: argparse.Namespace) -> None:
                         )
                         best_val_loss = val_loss
                         patience = train_config["patience"]
-                        torch.save(
-                            model.state_dict(),
-                            str(Path(args.checkpoint_path, "nmt.model")),
-                        )
+                        model.save(args.checkpoint_path)
                         # Also save the optimizer
                         torch.save(
                             optimizer.state_dict(),
-                            str(Path(args.checkpoint_path, "nmt.model.optim")),
+                            str(Path(args.checkpoint_path, "gpt.model.optim")),
                         )
                     else:
                         patience -= 1
@@ -259,7 +256,7 @@ def train(args: argparse.Namespace) -> None:
 
                 model.train()
             train_iter += 1
-        
+
         if epoch == train_config["max_epoch"]:
             print("reached maximum number of epochs!")
             return
@@ -344,14 +341,14 @@ def parse_args():
     parser.add_argument(
         "--wandb-project",
         type=str,
-        default="nmt-project",
+        default="f21nl-cw2",
         help="Weights and Biases project name.",
     )
 
     parser.add_argument(
         "--wandb-run-name",
         type=str,
-        default=f"nmt_{int(time.time())}",
+        default=f"gpt_{int(time.time())}",
         help="Weights and Biases run name.",
     )
 

@@ -58,12 +58,16 @@ def evaluate(args):
     print(f"Load vocab from {args.vocab_file}")
     vocab = Vocab.load(args.vocab_file)
 
-    print(f"Load model from {args.checkpoint_path}")
-    model = GPT(GPTConfig.from_yaml(args.model_config))
-    state_dict = torch.load(args.checkpoint_path, map_location="cpu")
-    model.load_state_dict(state_dict)
+    print(f"Loading model")
+
+    model: GPT = None
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
+
+    if args.checkpoint_path != None:
+        model = GPT.load(args.model_config, args.checkpoint_path, device)
+    else:
+        model = GPT.load_wandb(args.model_config, args.wandb_checkpoint_run, device)
     model.eval()
 
     sp = spm.SentencePieceProcessor()
@@ -118,11 +122,18 @@ def evaluate(args):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument(
         "--checkpoint-path",
         type=Path,
-        required=True,
         help="Path to the model checkpoint.",
+    )
+
+    group.add_argument(
+        "--wandb-checkpoint-run",
+        type=str,
+        help="Path to the model checkpoint in wandb.",
     )
 
     parser.add_argument(

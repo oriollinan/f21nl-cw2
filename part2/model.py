@@ -1,11 +1,13 @@
 import math
 from dataclasses import dataclass
+from pathlib import Path
 
 import torch
 import torch.nn as nn
 import yaml
 from torch.nn import functional as F
 
+import wandb
 
 @dataclass
 class GPTAttentionOutput:
@@ -370,3 +372,27 @@ class GPT(nn.Module):
                 break
 
         return GPTGenerateOutput(sequences=input_ids, attentions=attentions)
+
+    @staticmethod
+    def load(model_config, checkpoint_path: str, device):
+        model = GPT(GPTConfig.from_yaml(model_config))
+        state_dict = torch.load(checkpoint_path, map_location="cpu")
+        model.load_state_dict(state_dict)
+        return model.to(device)
+
+    @staticmethod
+    def load_wandb(model_config, run_path: str, device):
+        filename = "models/gpt.model"
+
+        restored = wandb.restore(name=filename, run_path=run_path, replace=True)
+
+        return GPT.load(model_config, filename, device)
+
+    def save(self, path: str):
+        full_path = str(Path(path, "gpt.model"))
+        torch.save(
+            self.state_dict(),
+            full_path,
+        )
+
+        wandb.save(full_path)
