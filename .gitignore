@@ -209,4 +209,7 @@ __marimo__/
 wandb/
 *.model
 *.vocab
-part1/vocab
+models
+vocab
+outputs
+*.png

@@ -5,6 +5,7 @@ import torch.nn.utils
 
 import wandb
 
+
 class NMT(nn.Module):
     """Simple Neural Machine Translation Model"""
 
@@ -72,7 +73,6 @@ class NMT(nn.Module):
         )
         self.dropout = nn.Dropout(p=dropout_rate)
 
-
     def forward(self, source: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Forward pass and compute the log-likelihood of target sentences.
 
@@ -110,7 +110,8 @@ class NMT(nn.Module):
 
         # Compute log probability of generating true target words
         target_gold_words_log_prob = (
-            torch.gather(P, index=target[1:].unsqueeze(-1), dim=-1).squeeze(-1) * target_masks[1:]
+            torch.gather(P, index=target[1:].unsqueeze(-1), dim=-1).squeeze(-1)
+            * target_masks[1:]
         )
         scores = target_gold_words_log_prob.sum(dim=0)
         return scores
@@ -404,7 +405,7 @@ class NMT(nn.Module):
     def load_wandb(run_path):
         filename = "models/nmt.model"
 
-        restored = wandb.restore(name=filename, run_path=run_path)
+        restored = wandb.restore(name=filename, run_path=run_path, replace=True)
 
         return NMT.load(filename)
 
@@ -431,4 +432,3 @@ class NMT(nn.Module):
 
         torch.save(params, path)
         wandb.save(path)
-

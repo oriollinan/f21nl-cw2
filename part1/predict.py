@@ -39,8 +39,16 @@ def predict(args):
     vocab = Vocab.load(args.vocab_file)
 
     print(f"Load model from {args.checkpoint_path}")
-    model = NMT.load(args.checkpoint_path)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+    model = (
+        NMT.load(args.checkpoint_path)
+        if args.checkpoint_path
+        else NMT.load_wandb(args.wandb_checkpoint_run)
+    )
+    device = torch.device(
+        "cuda:0"
+        if torch.cuda.is_available()
+        else "mps" if torch.backends.mps.is_available() else "cpu"
+    )
     model = model.to(device)
     model.eval()
 
@@ -84,11 +92,18 @@ def parse_args() -> argparse.Namespace:
         help="Input sentence to translate.",
     )
 
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument(
         "--checkpoint-path",
         type=Path,
-        required=True,
         help="Path to the model checkpoint.",
+    )
+
+    group.add_argument(
+        "--wandb-checkpoint-run",
+        type=str,
+        help="Path to the model checkpoint in wandb.",
     )
 
     parser.add_argument(
