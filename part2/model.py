@@ -349,7 +349,7 @@ class GPT(nn.Module):
             if do_sample:
                 ### Your code here (~5-12 lines) ###
                 # 1. If top_k is not None, crop the logits to only the top k options
-                indices = torch.arange(logits.shape[-1])
+                indices = torch.arange(logits.shape[-1], device=logits.device)
                 if top_k:
                     logits, indices = torch.topk(logits, top_k)
 
