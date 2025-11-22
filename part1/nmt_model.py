@@ -405,7 +405,7 @@ class NMT(nn.Module):
     def load_wandb(run_path):
         filename = "models/nmt.model"
 
-        restored = wandb.restore(name=filename, run_path=run_path, replace=True)
+        wandb.restore(name=filename, run_path=run_path, replace=True)
 
         return NMT.load(filename)
 

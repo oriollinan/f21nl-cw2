@@ -393,7 +393,7 @@ class GPT(nn.Module):
     def load_wandb(model_config, run_path: str, device):
         filename = "models/gpt.model"
 
-        restored = wandb.restore(name=filename, run_path=run_path, replace=True)
+        wandb.restore(name=filename, run_path=run_path, replace=True)
 
         return GPT.load(model_config, filename, device)
 

@@ -3,8 +3,19 @@ block_size: 128
 # GPT-2 vocab_size of 50257, padded up to nearest multiple of 64 for efficiency
 vocab_size: 15003
 
-n_layer: 6
-n_head: 6
-n_embed: 192
+# Small
+n_layer: 2
+n_head: 2
+n_embed: 16
+
+# Medium
+# n_layer: 4
+# n_head: 4
+# n_embed: 64
+
+# Large
+# n_layer: 6
+# n_head: 6
+# n_embed: 192
 
 dropout: 0.1
