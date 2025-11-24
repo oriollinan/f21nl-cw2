@@ -349,21 +349,29 @@ class GPT(nn.Module):
             if do_sample:
                 ### Your code here (~5-12 lines) ###
                 # 1. If top_k is not None, crop the logits to only the top k options
-                indices = torch.arange(logits.shape[-1], device=logits.device)
-                if top_k:
-                    logits, indices = torch.topk(logits, top_k)
+                top_k_indices = torch.arange(logits.shape[-1], device=logits.device)
+                if top_k is not None:
+                    logits, top_k_indices = torch.topk(logits, top_k)
 
                 # 2. If top_p is not None, crop the logits to only the top p options
-                if top_p:
-                    cum_probs = torch.cumsum(logits, -1)
-                    logits = logits.masked_fill_(~(cum_probs < top_p), float("-inf"))
+                top_p_indices = torch.arange(logits.shape[-1], device=logits.device)
+                if top_p is not None:
+                    logits, top_p_indices = torch.sort(logits, descending=True)
+                    probs = F.softmax(logits, -1)
+                    cum_probs = torch.cumsum(probs, -1)
+                    # NOTE: Find the index where top_p becomes greater than cum probs
+                    cutoff = torch.searchsorted(cum_probs, top_p)
+                    cutoff = int(cutoff.clamp(min=0, max=logits.shape[0] - 1))
+                    # NOTE: cutoff is off by one
+                    logits = logits[: cutoff + 1]
+                    top_p_indices = top_p_indices[: cutoff + 1]
 
                 # apply softmax to convert logits to (normalized) probabilities
                 logits = F.softmax(logits, -1)
 
                 # sample from the distribution using the re-normalized probabilities
-                index = torch.multinomial(logits, 1)
-                predicted_id = indices[index]
+                sample = torch.multinomial(logits, 1)
+                predicted_id = top_k_indices[top_p_indices[sample]]
 
                 # append sampled index to the running sequence and continue
                 input_ids = torch.cat((input_ids, predicted_id), dim=1)
