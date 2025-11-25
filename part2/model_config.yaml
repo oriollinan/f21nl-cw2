@@ -4,9 +4,9 @@ block_size: 128
 vocab_size: 15003
 
 # Small
-n_layer: 2
-n_head: 2
-n_embed: 16
+# n_layer: 2
+# n_head: 2
+# n_embed: 16
 
 # Medium
 # n_layer: 4
@@ -14,8 +14,8 @@ n_embed: 16
 # n_embed: 64
 
 # Large
-# n_layer: 6
-# n_head: 6
-# n_embed: 192
+n_layer: 6
+n_head: 6
+n_embed: 192
 
 dropout: 0.1

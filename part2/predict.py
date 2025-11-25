@@ -75,7 +75,7 @@ def predict(args):
     model.eval()
 
     sp = spm.SentencePieceProcessor()
-    sp.load("vocab/spm.model")
+    sp.load(str(args.encoder))
     with torch.inference_mode():
         subword_tokens = sp.encode_as_pieces(args.sentence)
         inputs = vocab.src.to_input_tensor([subword_tokens], device=device)
@@ -158,6 +158,13 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--encoder",
+        type=Path,
+        default=Path("vocab/spm.model"),
+        help="Path to the encoder model.",
+    )
+
+    parser.add_argument(
         "--max-decoding-time-step",
         type=int,
         default=70,
@@ -176,13 +183,13 @@ def parse_args() -> argparse.Namespace:
         type=int,
         help="If specified, only the top k tokens with the highest probability are considered for generation.",
     )
-    
+
     parser.add_argument(
         "--top-p",
         type=float,
         help="If specified, only the smallest set of tokens with cumulative probability >= top_p are considered for generation.",
     )
-    
+
     parser.add_argument(
         "--temperature",
         type=float,
