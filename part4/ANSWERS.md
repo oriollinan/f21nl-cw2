@@ -6,9 +6,7 @@ The original prediction was:
 Deux garçons sont assis sur un canapé qui est vêtus de rouge et noir.</s>
 ```
 
-Sampling does help fix the error partially.
-
-Only when the **K**, **P**, and **Temperature** hyperparameters are right.
+One would assume that sampling would help fix the error but only when the **K**, **P**, and **Temperature** hyperparameters are right.
 
 *Greedy* sampling gives the following output:
 
@@ -16,7 +14,7 @@ Only when the **K**, **P**, and **Temperature** hyperparameters are right.
 Deux garçons sont assis sur un canapé qui est vêtus de rouge et noir.</s>
 ```
 
-This is similar to the output that we get from the Bi-LSTM.
+This is exactly the output of the original prediction.
 
 When doing sampling without **P** and **K** we get:
 
