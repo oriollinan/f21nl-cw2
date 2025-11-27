@@ -62,7 +62,7 @@ def evaluate(args):
 
     model: GPT = None
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "mps" if torch.mps.is_available() else "cpu")
 
     if args.checkpoint_path != None:
         model = GPT.load(args.model_config, args.checkpoint_path, device)
@@ -71,7 +71,7 @@ def evaluate(args):
     model.eval()
 
     sp = spm.SentencePieceProcessor()
-    sp.load("vocab/spm.model")
+    sp.load(str(args.encoder))
 
     references = []
     predictions = []
@@ -117,6 +117,7 @@ def evaluate(args):
             "references": test_data_tgt,
         }
         json.dump(data, f, indent=4)
+    return bleu_score
 
 
 def parse_args():
@@ -169,6 +170,13 @@ def parse_args():
         type=Path,
         default=Path("vocab", "vocab.json"),
         help="Path to the vocabulary file.",
+    )
+
+    parser.add_argument(
+        "--encoder",
+        type=Path,
+        default=Path("vocab/spm.model"),
+        help="Path to the encoder model.",
     )
 
     parser.add_argument(
