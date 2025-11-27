@@ -64,7 +64,7 @@ def predict(args):
 
     print(f"Load model from {args.checkpoint_path}")
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "mps" if torch.mps.is_available() else "cpu")
 
     model = None
     if args.checkpoint_path:
@@ -107,16 +107,18 @@ def predict(args):
         )
 
         print(f"Prediction: {predictions}")
-        visualize_attention(
-            attention_scores,
-            source_tokens=[vocab.src.id2word[y_t.item()] for y_t in inputs[0]],
-            target_tokens=[
-                vocab.src.id2word[y_t.item()]
-                for y_t in generated_output[len(inputs[0]) :]
-            ],
-            output_path="attention_heatmap.png",
-            cmap="YlGnBu",
-        )
+        if args.visualise:
+            visualize_attention(
+                attention_scores,
+                source_tokens=[vocab.src.id2word[y_t.item()] for y_t in inputs[0]],
+                target_tokens=[
+                    vocab.src.id2word[y_t.item()]
+                    for y_t in generated_output[len(inputs[0]) :]
+                ],
+                output_path="attention_heatmap.png",
+                cmap="YlGnBu",
+            )
+    return predictions
 
 
 def parse_args() -> argparse.Namespace:
@@ -195,6 +197,13 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=1.0,
         help="The value used to module the next token probabilities.",
+    )
+
+    parser.add_argument(
+        "--visualise",
+        type=bool,
+        default=True,
+        help="Whether to visualise the prediction.",
     )
 
     args = parser.parse_args()

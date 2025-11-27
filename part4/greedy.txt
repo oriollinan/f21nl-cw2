@@ -1,4 +1,0 @@
-load vocab from vocab/vocab.json
-Load model from ../part4/nmt.model
-Number of parameters: 8455296 (8.46M)
-Prediction: Deux garçons sont assis sur un canapé qui est en rouge et noir</s>
